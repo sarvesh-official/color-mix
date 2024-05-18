@@ -1,7 +1,8 @@
 import { LockIcon, UnlockIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { toPng } from "html-to-image";
 
 const PALETTE_SIZE = 5;
 
@@ -51,6 +52,26 @@ function App() {
       return false;
     })
   );
+
+  const ref = useRef(null);
+
+  const handleDownload = useCallback(() => {
+    if (ref.current === null) {
+      return;
+    }
+
+    toPng(ref.current, { cacheBust: true })
+      .then((dataUrl) => {
+        const link = document.createElement("a");
+        link.download = "color-palette.png";
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, [ref]);
+
   const [colors, setColors] = useState(
     Array.from({ length: PALETTE_SIZE }, generateRandomColor)
   );
@@ -85,11 +106,14 @@ function App() {
       <ToastContainer position="bottom-center" />
       <div className="h-24 flex items-center justify-between px-6 md:px-8 lg:px-12">
         <h1 className="text-4xl font-bold text-amber-500">Color Mix</h1>
-        <button className="bg-amber-500 px-3 py-2 rounded hover:bg-amber-600">
+        <button
+          className="bg-amber-500 px-3 py-2 rounded hover:bg-amber-600"
+          onClick={handleDownload}
+        >
           Download
         </button>
       </div>
-      <div className="grow grid grid-cols-1 md:grid-cols-5">
+      <div className="grow grid grid-cols-1 md:grid-cols-5" ref={ref}>
         {colors.map((color, index) => {
           return (
             <ColorPlate
